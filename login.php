@@ -20,7 +20,9 @@
 		
 		<script src="https://code.jquery.com/jquery-1.8.3.js"></script>
 		<link rel="stylesheet" href="style.css">
-		<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+		
+
+		<script src="https://www.google.com/recaptcha/api.js?render=6LenZC8sAAAAAA-tARe4G4CapjV9-RWyJFT1md_s" async defer></script>
 	</head>
 	<body>
 		<div class="top-menu">
@@ -42,10 +44,7 @@
 					<input name="_login" type="text" placeholder="" onkeypress="return PressToEnter(event)"/>
 					<div class = "sub-name">Пароль:</div>
 					<input name="_password" type="password" placeholder="" onkeypress="return PressToEnter(event)"/>
-					
-					<center><div class="g-recaptcha" data-sitekey="6LfVXi8sAAAAAG6G-KfA3wBR_NwUe8snCY8sDP2E"></div></center>
 					<br>
-
 					<a href="regin.php">Регистрация</a>
 					<br><a href="recovery.php">Забыли пароль?</a>
 					<input type="button" class="button" value="Войти" onclick="LogIn()"/>
@@ -61,15 +60,24 @@
 		</div>
 		
 		<script>
+
+			function getRecaptchaToken() {
+				return new Promise((resolve) => {
+					grecaptcha.ready(function() {
+					grecaptcha.execute('6LenZC8sAAAAAA-tARe4G4CapjV9-RWyJFT1md_s', {action: 'login'}).then(function(token) {
+						resolve(token);
+					});
+				});
+			});
+		}
+
 			function LogIn() {
 				var loading = document.getElementsByClassName("loading")[0];
 				var button = document.getElementsByClassName("button")[0];
 				
 				var _login = document.getElementsByName("_login")[0].value.trim();
 				var _password = document.getElementsByName("_password")[0].value;
-				var captcha = grecaptcha.getResponse();
 
-				// Проверка полей
 				if (_login === "") {
 					alert("Введите логин.");
 					return;
@@ -78,44 +86,41 @@
 					alert("Введите пароль.");
 					return;
 				}
-				if (captcha.length === 0) {
-					alert("Пройдите проверку 'Я не робот'.");
-					return;
-				}
 
 				loading.style.display = "block";
 				button.className = "button_diactive";
+
 				
-				var data = new FormData();
-				data.append("login", _login);
-				data.append("password", _password);
-				data.append("g-recaptcha-response", captcha);
-				
-				$.ajax({
-					url         : 'ajax/login_user.php',
-					type        : 'POST',
-					data        : data,
-					cache       : false,
-					dataType    : 'html',
-					processData : false,
-					contentType : false, 
-					success: function (_data) {
-						if (_data.trim() === "" || _data.trim() === "-1") {
-							alert("Логин или пароль неверный.");
-							grecaptcha.reset(); // Сброс капчи после ошибки
-						} else {
-							localStorage.setItem("token", _data);
-							location.reload();
+				getRecaptchaToken().then(function(token_v3) {
+					var data = new FormData();
+					data.append("login", _login);
+					data.append("password", _password);
+					data.append("recaptcha_v3_token", token_v3);
+
+					$.ajax({
+						url         : 'ajax/login_user.php',
+						type        : 'POST',
+						data        : data,
+						cache       : false,
+						dataType    : 'html',
+						processData : false,
+						contentType : false, 
+						success: function (_data) {
+							if (_data.trim() === "" || _data.trim() === "-1") {
+								alert("Логин или пароль неверный.");
+							} else {
+								localStorage.setItem("token", _data);
+								location.reload();
+							}
+							loading.style.display = "none";
+							button.className = "button";
+						},
+						error: function() {
+							alert("Системная ошибка!");
+							loading.style.display = "none";
+							button.className = "button";
 						}
-						loading.style.display = "none";
-						button.className = "button";
-					},
-					error: function() {
-						alert("Системная ошибка!");
-						grecaptcha.reset();
-						loading.style.display = "none";
-						button.className = "button";
-					}
+					});
 				});
 			}
 			
