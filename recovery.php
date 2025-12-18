@@ -21,6 +21,7 @@
 		
 		<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 		<link rel="stylesheet" href="style.css">
+		<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 	</head>
 	<body>
 		<div class="top-menu">
@@ -57,9 +58,12 @@
 				
 					<div class = "sub-name">Почта (логин):</div>
 					<div style="font-size: 12px; margin-bottom: 10px;">На указанную вами почту будет выслан новый пароль, для входа в систему.</div>
-					<input name="_login" type="text" placeholder="E-mail@mail.ru"/>
+					<input name="_login" type="text" placeholder="E-mail@mail.ru" onkeypress="if(event.keyCode==13) Recovery()"/>
 					
-					<input type="button" class="button" value="Отправить" onclick="LogIn()" style="margin-top: 0px;"/>
+					<center><div class="g-recaptcha" data-sitekey="6LfVXi8sAAAAAG6G-KfA3wBR_NwUe8snCY8sDP2E"></div></center>
+					<br>
+
+					<input type="button" class="button" value="Отправить" onclick="Recovery()" style="margin-top: 0px;"/>
 					<img src = "img/loading.gif" class="loading" style="margin-top: 0px;"/>
 				</div>
 				
@@ -86,45 +90,54 @@
 				errorWindow.style.display = "block";
 			}
 			
-			function LogIn() {
-				var _login = document.getElementsByName("_login")[0].value;
+			function Recovery() {
+				var _login = document.getElementsByName("_login")[0].value.trim();
+				var captcha = grecaptcha.getResponse();
+
+				// Проверки
+				if (_login === "") {
+					alert("Введите логин (почту).");
+					return;
+				}
+				if (captcha.length === 0) {
+					alert("Пройдите проверку 'Я не робот'.");
+					return;
+				}
+
 				loading.style.display = "block";
 				button.className = "button_diactive";
 				
 				var data = new FormData();
 				data.append("login", _login);
+				data.append("g-recaptcha-response", captcha);
 				
-				// AJAX запрос
 				$.ajax({
 					url         : 'ajax/recovery.php',
-					type        : 'POST', // важно!
+					type        : 'POST',
 					data        : data,
 					cache       : false,
 					dataType    : 'html',
-					// отключаем обработку передаваемых данных, пусть передаются как есть
 					processData : false,
-					// отключаем установку заголовка типа запроса. Так jQuery скажет серверу что это строковой запрос
 					contentType : false, 
-					// функция успешного ответа сервера
 					success: function (_data) {
-						
-						if(_data == -1) {
-							EnableError();
-							loading.style.display = "none";
-							button.className = "button";
-						} else {
-							console.log("Пароль изменён, ID абитуриента: " +_data);
-							document.getElementsByClassName('success')[0].style.display = "block";
-							document.getElementsByClassName('description')[0].innerHTML = "На указанный вами адрес <b>"+_login+"</b> будет отправлено письмо с новым паролем.";
-							
-							document.getElementsByClassName('login')[0].style.display = "none";
-						}
-					},
-					// функция ошибки
-					error: function( ){
-						console.log('Системная ошибка!');
 						loading.style.display = "none";
 						button.className = "button";
+
+						if (_data.trim() === "-1" || _data.trim() === "0") {
+							EnableError();
+							grecaptcha.reset();
+						} else {
+							document.getElementsByClassName('success')[0].style.display = "block";
+							document.getElementsByClassName('description')[0].innerHTML = "На указанный вами адрес <b>"+_login+"</b> будет отправлено письмо с новым паролем.";
+							document.getElementsByClassName('login')[0].style.display = "none";
+							grecaptcha.reset();
+						}
+					},
+					error: function() {
+						alert("Системная ошибка!");
+						loading.style.display = "none";
+						button.className = "button";
+						grecaptcha.reset();
 					}
 				});
 			}
