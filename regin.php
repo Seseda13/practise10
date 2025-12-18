@@ -45,7 +45,7 @@
 					<div class = "sub-name">Повторите пароль:</div>
 					<input name="_passwordCopy" type="password" placeholder="" onkeypress="return PressToEnter(event)"/>
 
-					<center><div class="g-recaptcha" data-sitekey="6LfcXC8sAAAAAN3gt1e4CN9l0r9TFugLRB7mzsAc"></div></center>
+					<center><div class="g-recaptcha" data-sitekey="6LfVXi8sAAAAAG6G-KfA3wBR_NwUe8snCY8sDP2E"></div></center>
 
 					<a href="login.php">Вернуться</a>
 					<input type="button" class="button" value="Зайти" onclick="RegIn()" style="margin-top: 0px;"/>

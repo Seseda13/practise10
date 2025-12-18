@@ -17,7 +17,7 @@ if($user_read = $query_user->fetch_row()) {
         echo "Нет проверки 'Я не робот'";
     } exit;
 
-    $secret = "6LfcXC8sAAAAABeo2fnjnUCDHh4-0PyAl5SIr2Is";
+    $secret = "6LfVXi8sAAAAAIFnr0jBaIqnFcQoVYNY1LST-my7";
     $recaptcha = new \ReCaptcha\ReCaptcha($secret);
 
     $response = $recaptcha->verify($_POST["g-recaptcha-response"], $_SERVER["REMOTE_ADDR"]);
